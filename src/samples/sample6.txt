@@ -1,0 +1,20 @@
+http://regionaldashboard.alberta.ca/export/opendata/Greenhouse%20Gas%20Emissions/csvs
+http://regionaldashboard.alberta.ca/export/opendata/Employment%20Insurance%20Beneficiaries/csvs
+https://open.alberta.ca/dataset/4a493355-1283-4197-9928-7bb7baa01939/resource/121baabb-6cc4-470f-8d3e-3eb23998097f/download/grossdomesticproductmarket.csv
+https://open.alberta.ca/dataset/b366f7d8-dae3-4b8f-a876-ba4d72f05fef/resource/b380db6f-3467-4d03-86a7-9ca367ec2a1d/download/abpopprojmed2017-2041-by-er.csv
+http://regionaldashboard.alberta.ca/export/opendata/Oil Production/csvs
+https://open.alberta.ca/dataset/6ad8e956-e6f7-410c-9403-27bd6fcb7ead/resource/649e960f-231d-485e-967a-daa45aedde0b/download/goahectaresburnedfromwildfirecsvv2.02015-07-30.csv
+https://open.alberta.ca/dataset/488d9e1a-6ec2-4ada-88f7-9690d5e84a97/resource/d728f151-ab29-4b0a-bc4d-3d8dcd9ad648/download/stceducattainmentofaborandnon-aborcsvv5.02015-03-10.csv
+https://open.alberta.ca/dataset/e4ecb4fa-28b5-4abb-8c32-b2a76d2a6ee0/resource/fd7fbcc8-5407-4479-8f46-a25ba3817b5d/download/child-care-information-december-2015.csv
+https://open.alberta.ca/dataset/31035bfe-bdca-4e1c-ba70-af0158223424/resource/8374f049-2824-49c1-b3f1-8eccc2c13b71/download/schedule7_political_activities_resources_ab.csv
+https://open.alberta.ca/dataset/7b1e611e-9f26-47dd-8654-c8509ef93e1c/resource/6276a25b-e18e-4542-b936-bc94ca0482ae/download/goadesktopejjulie.zhoudesktopstcpopulationgrowthinalbertaandcanadacsvv2.02012-07-06.csv
+https://open.alberta.ca/dataset/50fd6eb3-e8d4-409e-8f14-313799daf2fe/resource/04e74ee0-6719-4d58-bbb5-bb06646a05aa/download/goariverwaterqualityindexcsvv2.02015-06-19.csv
+https://open.alberta.ca/dataset/fc537bdf-268c-49c8-8886-a7c2b9093643/resource/f37c1fec-f035-489a-88ff-d03820eef7b1/download/2012lifeinsurpremannuitiesclaimscerts-v1-2014-01-21.csv
+http://wildfire.alberta.ca/reports/activedd.csv
+https://open.alberta.ca/dataset/03d9b82e-38c8-4225-a489-dd5e7be597f4/resource/7b72bc93-f7bb-4bdf-a453-7e0ec9cd2624/download/stillbirths-female-birth-weight-by-age-of-mother10csv.csv
+http://regionaldashboard.alberta.ca/export/opendata/Air%20Quality%20Index/csvs
+https://open.alberta.ca/dataset/5275a9d3-0fbc-4d22-b843-2724edc457dd/resource/5b771434-a487-4c97-ae34-ab7cbf0a4fb0/download/stcinterprovincialmigrationcsvv1.02013-06-280.csv
+https://open.alberta.ca/dataset/93e9c2b9-6639-48e8-9190-0066c544ec7a/resource/8a5a979c-2580-4647-94db-9f1bc9b5510c/download/stillbirths-annual-totals10csv.csv
+https://open.alberta.ca/dataset/d573babe-ef43-44f0-932a-ada0a38397ff/resource/083c1a66-f514-49f6-9c5d-7034f489b5ef/download/goaphysicalconditionoffacilitiescsvv2.02015-06-11.csv
+https://open.alberta.ca/dataset/b8db387d-13a9-46f5-86cf-426daa01ac2b/resource/c0e17ded-6fca-4489-966d-96fc5ce4f299/download/mefposigoachildinterventionpermanencyoutcomesv3.02015-07-23.csv
+https://open.alberta.ca/dataset/e2844d33-3524-40a1-9a8e-5002f13c89f8/resource/40e5bf59-6ed3-4af5-8e25-8edb3bc539d8/download/2012esrdfishstocking.csv

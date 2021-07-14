@@ -1,0 +1,657 @@
+# Any line starting with a "#" is a comment, and has no effect on the program
+# 
+#       1              2                3               4         5            6         7         8         9       10     11       12           13        14
+# ROW-ORIENTED, LAST-CRAWL-DATE, CRAWL-FREQUENCY, UPDATE-TYPE, KEYWORDS, SHEET_NUMBER, TITLE, DESCRIPTION, LABELS, CONTENT, URL, [RELATIVE], [FILE-TYPE], [CUT]
+#
+# 1: ROW-ORIENTED
+# Should be "R" if the data is row oriented. "C" if the data is column oriented
+#
+# Typically if the labels are arranged in a row, then it is row oriented
+#
+# 2: LAST_CRAWL_DATE
+# Specifies the last date a webpage was crawled
+#
+# Each time the program is run, it will update this field to the current date
+#
+#
+# 3: CRAWL-FREQUENCY
+# Specify how often you want the data to be crawled
+#   "daily"
+#   "weekly"
+#   "monthly"
+#   "quarterly"
+#   "yearly"
+#
+# 4: UPDATE-TYPE
+# Specify the type of update machanism the table uses
+#
+# If rows are added to existing data, then update type is 'REPLACE' , if
+# the old data is removed and new data is added, then update is 'ADD'
+#
+#
+# 5: KEYWORDS
+# Have some keywords assoicated with the data
+# This only has implactions for queries and can be left blank if desired
+#
+# Seperate keywords with a colon ( : ), i.e oil:energy:gas
+#
+# 6: SHEET-NUMBER:
+# Only appplicable for xlsx files, leave blank for csv
+#
+# Specify the sheet number where the data is found
+# 
+#
+# 7/8/9/10: DATA
+# Provide either a string, or a method to find the location of each column 
+# within the file. 
+#
+# Currently there are 3 ways of specifying a location in a file:
+#   a) Row number
+#   b) Tag + Offset
+#   c) END
+#
+#
+# In some cases, it may be desirable to specify a range of rows. To do so, 
+# just specify two locations (using either (a) or (b) and seperate them with
+# a colon. i.e "OBSERVATIONS"+1:END in the CONTENT field tells the program
+# that the start of the content is one rows below the "OBSERVATIONS", and 
+# goes to the end of the file
+#
+# One important thing to note is that if you use a row number to mark the end
+# of the data, when new rows are added, they will not be updated, since they
+# have a bigger row number, use END whenever you can
+#
+# 11: URL
+# Specify the URL of the table / site to be scraped.
+#
+# The URL can contain a wildcard * to specify that you would like to scrape all
+# of the tables on a particular website.
+#
+#
+# 12: RELATIVE
+#
+# Only required if the URL uses a wildcard
+#
+# Specify if the website uses relative addressing or absolute
+# addressing. This can be found by going to the site, right clicking on a link
+# and clicking inspect. In the highlighted section at the bottom, there should
+# be some text of the form: href='SOMETHING'. If the something starts with a "/"
+# then relative should be 'R' , otherwise it should be 'A'. This option is only
+# important if you are using wildcard expansion.
+#
+# 13: FILE-TYPE
+# Only required if the URL contains a wildcard
+#
+# Specify what kind of files you want to extract. Currently the
+# only 2 supported options are 'csv' and 'xlsx'.
+#
+# 14: CUT
+# Only required if the URL contains a wildcard
+#
+# Some websites use relative addressing but not to your base address. 
+# Consider the following example: The base URL of the site you want to scrape 
+# is www.abcd.com/e     The website uses relative addressing, however it is
+# relative to www.abcd.com    , then the CUT would be /e , since we cut out
+# this component of the base url before scraping.
+#
+#
+#
+#
+#
+#
+#
+# HOW DATA IS UPDATED:
+# Once the data is within the database, the program (if run once a day at midnight) 
+# will ensure that new and/or modified rows will be present in the database. The 
+# entry in the mapping file can be removed if desired, or altered to make some changes
+# to your table.
+#
+#
+#
+# HOW DATA IS DELETED:
+# To delete an entry, enter a line of the following format in your mapping file:
+# D@URL_TO_BE_DELETED
+#
+# Wildcards work the same way for deleing as they do for scraping.
+# 
+# example:
+# D@https://www.bankofcanada.ca/rates/*
+# 
+# The entry above will delete all data associated with that url from our
+# database
+# 
+#
+# EXAMPLE USAGES
+#
+# Example of scraping a single, simple XLSX file
+#"R",29/06/2021,"daily","REPLACE","population",1,"population of different cities",,1,2:19,"https://open.alberta.ca/dataset/8dae0ffd-dbb7-46f7-89eb-efa64b2ce385/resource/1b740d64-55ea-48df-94d6-8e858c219c73/download/ma-population-list-2017.xlsx",,"xlsx"
+#
+# Example of scraping multiple tables using TAGS and OFFSETS to specify locations in a file
+#"R",28/06/2021,"daily","daily",,1,"NAME"+1,"DESCRIPTION"+1,"OBSERVATIONS"+1,"OBSERVATIONS"+2:END,"https://www.bankofcanada.ca/rates/*","A","csv"
+#
+# Example of scraping a single, simple CSV file
+#"R",13/07/2021,"daily","ADD","energy",1,"NaturalGasProduction",,1,2:END,"https://economicdashboard.alberta.ca/Download/DownloadFile?extension=csv&requestUrl=https%3A%2F%2Feconomicdashboard.alberta.ca%2Fapi%2FNaturalGasProduction"
+#
+# Example of deleting an Entry
+#D@https://www.bankofcanada.ca/*
+#
+# Some more examples for testing
+#"R",28/06/2021,"monthly","weekly","agriculture:cattle",1,"Cattle prices",,1,2:END,"https://economicdashboard.alberta.ca/Download/DownloadFile?extension=csv&requestUrl=https%3A%2F%2Feconomicdashboard.alberta.ca%2Fapi%2FLivestockPrices"
+#"R",28/06/2021,"monthly","weekly","agriculture",1,"Grain prices",,1,2:END,"https://economicdashboard.alberta.ca/Download/DownloadFile?extension=csv&requestUrl=https%3A%2F%2Feconomicdashboard.alberta.ca%2Fapi%2FGrainPrices"
+#
+# A daily example for testing
+#"R",30/06/2021,"daily","REPLACE","finance",,"exchange-rate",,39,40:END,"https://www.bankofcanada.ca/valet/observations/group/FX_RATES_DAILY/csv?start_date=2017-01-03"
+#
+#
+# BENCHMARK ENTRIES BELOW
+#
+# SAMPLE 1
+#
+# 1 : no, needs label concat 
+#"R",06/07/2021,"yearly","REPLACE","finance",,"payments for physicians",49:50,53,54:90,"https://open.alberta.ca/dataset/df11e1a7-a6ca-41ec-99b3-eb3ae2cc4c08/resource/81a6be3e-2e3f-4c47-b1d3-545e4b4197a6/download/maprunitscrmdaopen-data-statsupp2019_2020table_2.12-b.xlsx"
+
+# 2 : yes
+#"R",06/07/2021,"yearly","REPLACE","finance",,"payments for physicians by location",,7,8:END,"https://open.alberta.ca/dataset/17a892cb-6358-47ad-a45e-4f86aafb3394/resource/138ce878-3125-48e2-9bf1-3b211015c35a/download/table-3.42.xlsx"
+
+# 3 : yes but some garbage at the end
+#"R",06/07/2021,"yearly","REPLACE","population",,1,,3,4:END,"https://open.alberta.ca/dataset/d3c724ec-b65d-4644-90f6-b036b34176bc/resource/af18efc0-e10d-4f12-8f23-c039b8624c7a/download/2019-2046-04-census-divisions-population-projections-low.xlsx"
+
+# 4 : yes
+#"R",06/07/2021,"monthly","REPLACE","postal codes",,"postal codes",,1,2:END,"https://open.alberta.ca/dataset/d2865004-dcff-4eae-b374-eecfb1360952/resource/042212e4-da5f-4c3b-b945-51e10830b5bf/download/c_localdatacats_reportsopen-dataconsumer-contact-centre-call-data-2017.xlsx"
+
+# 5 : no , labels are spread across multiple lines, fine other than that
+
+# 6 : yes
+#"R",06/07/2021,"monthly","REPLACE","healthcare",,3,4,6,7:END,"https://open.alberta.ca/dataset/6591601a-05be-48fd-9378-54e4af31251b/resource/92101097-43cf-4019-b645-68d3d099ca1a/download/table-2.211.xlsx"
+
+# 7 : yes
+#"R",06/07/2021,"yearly","REPLACE","agriculture",,1,5,3,1:"Province"+1,"https://open.alberta.ca/dataset/7e72cb89-6a90-4f0f-b4c3-1a23d13a3327/resource/edf4f2a9-2cbf-4911-82f8-e18dccd5d347/download/tab-88.xlsx"
+
+# 8 : yes , 1 entry per table (sheet in this case)
+#"R",06/07/2021,"yearly","REPLACE","mining",2,"mining upgrading production",,1,2:END,"https://open.alberta.ca/dataset/3021d788-d4c9-4f49-a849-47b6c02f49cd/resource/ceebbfe4-51b7-4bb6-b4ff-cc694ca09d5b/download/alberta-oil-sands-greenhouse-gas-emission-intensity-analysis.xlsx"
+
+# 9 : yes
+#"R",06/07/2021,"yearly","REPLACE","healthcare",1,2:3,6,5,7:11,"https://open.alberta.ca/dataset/edc7094b-420f-48fa-9af1-12d30acfa84c/resource/5ce48727-2ac9-4e12-b78b-6e2c2cb746dc/download/maprunitscrmdaopen-data-statsupp2019_2020table_2.7.xlsx"
+
+# 10 : yes
+#"R",06/07/2021,"monthly","REPLACE","publications",,"publications",,1,2:END,"https://open.alberta.ca/dataset/ba7f0f71-b478-42ce-8445-91bcb9222389/resource/717766c2-7684-42f6-9dc8-ead758af072c/download/goa-publications-2014-q4.xlsx"
+
+# 11 : yes
+#"R",06/07/2021,"yearly","REPLACE","healthcare",1,2,3,5,11:END,"https://open.alberta.ca/dataset/e311fc30-7f09-4413-b13e-b4238f076a2c/resource/d76d6219-0478-4b34-8293-33e490cbbe2d/download/maprunitscrmdaopen-data-statsupp2018_2019table_2.3.xlsx"
+
+# 12 : yes , however there is some garbage at the end, maybe use regex to match?
+#"R",,"yearly","REPLACE","healthcare",1,2,3,5,6:"Note"+1,"https://open.alberta.ca/dataset/9b113959-ec73-4aaf-8d8b-8b9b948d19c2/resource/edbbaf84-43eb-4d99-add8-4974a9685bee/download/table-2.16.xlsx"
+
+# 13 : yes
+#"R",06/07/2021,"yearly","REPLACE","finance",1,1,,3,6:16,"https://open.alberta.ca/dataset/763b186e-3c8b-4c40-8f87-2bfcca8a262c/resource/629067c6-beda-4929-88ce-34248a6d8fa2/download/table-22-alberta-average-weekly-earnings-for-food-related-industries.xlsx"
+
+# 14 : no, we lose data or we possibly corrupt our database, how do we handle overflow?
+#"R",,"yearly","REPLACE","ahd",1,"ahs injury report",,1,2:END,"https://open.alberta.ca/dataset/a2772d8c-48be-4d39-bcf2-dafca456d724/resource/fb8cd062-039a-4f4f-b012-a4220fdc8a67/download/msfhwbidata-analyticsdataemployer-recordopen-data2019_ohs-employer-record-open-data.xlsx"
+
+# 15 : yes, but it would be very repetive to enter for each month
+#"R",06/07/2021,"yearly","REPLACE","building",1,9,7,16,18:END,"https://open.alberta.ca/dataset/e1f2f749-045a-46c5-8ed5-180a472f792b/resource/8179815c-5c48-4246-a499-58432d950050/download/building-permit-information-for-albertas-census-subdivisions-20152016-03-10.xlsx"
+
+# 16 : yes
+# left this one out, because its so basic
+# "R", "yearly","REPLACE","pharmacy",1, ....
+
+# 17 : yes, but requires many entries to capture all of the data
+# left out because of how simple it is
+
+# 18 : yes 
+#"R",06/07/2021,"yearly","REPLACE","agriculture",1,1,2,4,5:56,"https://open.alberta.ca/dataset/6b3221f9-5edb-438f-910b-0d899d8433cb/resource/01246273-cfb3-48ef-822b-e205437ae90e/download/tab-28.xlsx"
+
+# 19 : yes
+# left out since it is a very simple format
+
+
+# 20 : yes, but requires many entries to get all of the data
+#https://open.alberta.ca/dataset/c0516c9a-c686-41cc-9dc7-05988243953f/resource/6616fe2f-d5be-47ca-8bdd-cdd1fc6ce047/download/budget-2021-ministry-business-plans-tables-2021-24.xlsx
+
+
+# 18/20 = 90% of tables could be properly parsed
+
+# SAMPLE 2
+#
+# 1 : yes
+#"R",06/07/2021,"yearly","REPLACE","manufacturing",1,1,6,4,8:17,"https://open.alberta.ca/dataset/0e3bffc8-fca6-459c-be2d-c08fcea059b4/resource/e3e08b0c-b05e-4b32-a381-e5365f2ed5fc/download/table-25-value-of-manufacturing-sales-for-meat-product-industries-canada-and-provinces.xlsx"
+
+
+
+# 2 : yes , maybe we should consider putting a 'none' for update freq and type
+#"R",06/07/2021,"yearly","REPLACE","health",1,2,3,5,6:17,"https://open.alberta.ca/dataset/4ce5f3c5-f7c8-4a23-b94c-f22a41383e1c/resource/a515fe6d-d730-4e2e-8570-1cc9e51bf076/download/maprunitscrmdaopen-data-statsupp2018_2019table_1.4.xlsx"
+
+# 3 :  yes
+#"R",06/07/2021,"none","REPLACE","health",1,2,3,5,6:11,"https://open.alberta.ca/dataset/23cd930b-88e5-403c-b901-9986e30902b8/resource/457089b9-bad6-4c3e-b15c-fea3f38377b9/download/table-4.6.xlsx"
+
+
+# 4 : yes
+#"R",06/07/2021,"none","REPLACE","agriculture",3,1,,4,7:END,"https://open.alberta.ca/dataset/30d51545-72fe-41ef-b57b-4443f7d98519/resource/81e7f16e-01fd-4d02-8aa4-50785b5541f3/download/census-of-agriculture-2011-c22013-04-10.xlsx"
+
+
+# 5 : yes
+#"R",06/07/2021,"none","REPLACE","healthcare",1,2,3,5,6:END,"https://open.alberta.ca/dataset/9b113959-ec73-4aaf-8d8b-8b9b948d19c2/resource/0c56f824-3b3e-474d-aab1-18ef58b56e1d/download/table-2.16.xlsx"
+
+# 6 : no , not enough support for colun oriented data, our current approach is insufficient
+# https://education.alberta.ca/media/3273029/diploma-multiyear-auth-list-annual.xlsx
+ 
+
+# 7 : yes , simple format
+# https://open.alberta.ca/dataset/a2361d34-b9de-46bf-aefd-3f2cd6e9d3e5/resource/4bc20cfa-c8b3-4c32-8bd5-99cb10a8d41c/download/2017-survey-of-albertans-odp.xlsx
+
+
+# 8 : yes, but requires many entries in order to capture all of the data
+#"R",06/07/2021,"none","REPLACE","population":"rocky-mtn-house",1,3,,4,7:12,"https://open.alberta.ca/dataset/9b113959-ec73-4aaf-8d8b-8b9b948d19c2/resource/0c56f824-3b3e-474d-aab1-18ef58b56e1d/download/table-2.16.xlsx"
+
+# 9 : yes , left out due to being trivial
+# https://open.alberta.ca/dataset/e8e7e9ed-b38c-438d-a2b7-a0d08116cd16/resource/6bcfcef9-534c-4946-882a-47457d36c65e/download/table-2.3.xlsx
+
+
+# 10 : yes
+#"R",06/07/2021,"none","REPLACE","population",1,1,,2,3:8,"https://open.alberta.ca/dataset/a5a50b92-41e0-4238-b4f0-5128c6383e49/resource/677ce9de-b53f-4c15-a8b4-d814d78168eb/download/longitudinal-employment-analysis-program-2001-20122015-03-09.xlsx"
+
+# 11 : no , an issue with extracting the labels for some reason
+#"R",06/07/2021,"none","REPLACE","medicine:finance",1,2,3,6,12:43,"https://open.alberta.ca/dataset/9bae0be8-7b3b-44fd-a4b3-536a831ff4c5/resource/eb85f89e-45a6-43ed-b39e-79bef1de2d70/download/maprcommoninformation-productsstatistical-supplement-tablestable-2.22.xlsx"
+
+# 12 : yes , and trivial so left out
+
+# 13 : yes, same as num 8
+# https://open.alberta.ca/dataset/7301211e-8263-44b2-a5ca-a091af5254c4/resource/69d330b3-f33d-44b3-93ac-82d1b22d4a37/download/fort-mcmurray-conklin-58-data.xlsx
+
+# 14 : yes , labels not being pulled properly once again
+# lets pull the policy rates from sheet 7
+# fixed, now yes
+#"R",06/07/2021,"yearly","REPLACE","finance:rates",7,1,,3,4:END,"https://open.alberta.ca/dataset/e46d1308-612d-4f47-8801-507ae3f8a88d/resource/37fc9096-d500-4b80-9ec7-01b75108bb7f/download/budget-2021-fiscal-plan-economic-outlook-tables-2021-24.xlsx"
+
+
+# 15 : yes, but labels are in french 
+# https://open.alberta.ca/dataset/a8e30a91-ee76-4506-9c35-02025911f435/resource/20ad9675-7ef5-47ce-b94a-73eabacca3cd/download/demographic-estimates-subprovincial-areas-2006-to-2009-2010-12-16.xlsx
+
+# 16 : yes
+#"R",07/07/2021,"monthly","REPLACE","caseload",1,1,,2,3:END,"https://open.alberta.ca/dataset/31ced359-0047-4fe2-8384-d4e3ff57ccf0/resource/2373ea57-8f11-4386-b2dc-722a729611aa/download/goasharedcssspqpqara_research-strategiesopen-data00-open-data-asset-packages-2021pdd-quarterlyp.xlsx"
+
+# 17 : yes , left out due to simplicity
+# https://open.alberta.ca/dataset/31ced359-0047-4fe2-8384-d4e3ff57ccf0/resource/2373ea57-8f11-4386-b2dc-722a729611aa/download/goasharedcssspqpqara_research-strategiesopen-data00-open-data-asset-packages-2021pdd-quarterlyp.xlsx
+
+# 18 : yes, left out due to simple format
+# https://open.alberta.ca/dataset/31ced359-0047-4fe2-8384-d4e3ff57ccf0/resource/2373ea57-8f11-4386-b2dc-722a729611aa/download/goasharedcssspqpqara_research-strategiesopen-data00-open-data-asset-packages-2021pdd-quarterlyp.xlsx
+
+# 19 : maybe not well? , column 
+# also in theory, if this were updated yearly, there would be two columns being entered
+#"R",09/07/2021,"none","REPLACE","coverage",1,2:3,4,6:7,8:15,"https://open.alberta.ca/dataset/483db988-bcc1-499f-90a4-bf89aa5af3e9/resource/33a08fbb-ee6a-4eeb-9235-32c0b1ec10d9/download/table-4.21.xlsx"
+
+# 20 : yes, but the data may not make much sense, lots of empty cells (sheet 6)
+# https://open.alberta.ca/dataset/06952602-636b-4b13-b3b5-95ccdac9fe50/resource/1c39027c-860d-4792-8e2d-687cd9490289/download/oil-and-gas-extraction-survey-20122013-11-04.xlsx
+ 
+
+
+
+## stats
+# 17 / 20 = 85% success
+
+
+
+
+
+# SAMPLE 3 
+
+# 1 : no, labels aren't accurate, also this data source is not easily parsible
+# implement range for labels?
+# "R",,"none","REPLACE","building:permit",2,9,7,15,16:
+
+
+# 2 : yes , but label concat may help
+#"R",07/07/2021,"none","REPLACE","physicians",1,2,3,5,7:38,"https://open.alberta.ca/dataset/f8b6d3d8-1ef4-4ff8-89b1-161b4f66a5dd/resource/3acc5f5f-eed0-405f-90ee-0b864cccdc6a/download/table_2.14.xlsx"
+
+
+# 3 : yes
+# left out because of its simplicity 
+# https://open.alberta.ca/dataset/9fceda54-763f-4976-9c7a-084eb26c39f9/resource/7251cc2f-f0c1-4ad6-be0c-5ce04e044ade/download/dataset-listing.xlsx
+
+
+# 4 : yes
+#"R",07/07/2021,"none","REPLACE","productivity",4,1,,3,4:27,"https://open.alberta.ca/dataset/e46d1308-612d-4f47-8801-507ae3f8a88d/resource/9b9e97a3-3f92-4fe8-9d23-9d14f3dead5e/download/budget-2021-fiscal-plan-fueling-canadas-economic-recovery.xlsx"
+
+# 5 : yes, but labels can be improved
+#"R",07/07/2021,"none","REPLACE","health",1,2:4,5,9,10:12,"https://open.alberta.ca/dataset/b16954ee-6113-40af-9b8e-2acaf0925c37/resource/dda71cb1-4ae0-4e11-afdb-3df95ceecf4b/download/table-2.28.xlsx"
+
+# 6 : yes , left out due to simplicity
+# https://open.alberta.ca/dataset/ba7f0f71-b478-42ce-8445-91bcb9222389/resource/2bb76fbe-bbc5-4e31-bfab-1b81d9481fe9/download/goa-publications-2016-q2.xlsx
+
+# 7 : yes, although it takes many entries to caputre the data
+# similar to sample 2 number 8
+# https://open.alberta.ca/dataset/7301211e-8263-44b2-a5ca-a091af5254c4/resource/e0f59fba-2131-458c-806a-2f2ba2d5e8a6/download/calgary-hays-16-data.xlsx
+
+
+# 8 : yes, but in order to capture it, it requires many entries
+#"R",07/07/2021,"none","REPLACE","farms",1,1,5,3,6:9,"https://open.alberta.ca/dataset/38ffc19c-b377-4a04-93f3-be924cfa7fe8/resource/5c399f96-c51f-4bd1-946f-a2ec6ce91597/download/table-106-census-of-agriculture-farms-and-land-canada-and-provinces.xlsx"
+
+
+# 9 : yes, similar to number sample 2 N 13
+# https://open.alberta.ca/dataset/0caef331-8b2d-47eb-ae43-92f7f782e511/resource/d3d3108a-93ad-441b-9f53-b767d9394b91/download/table-4.7.xlsx
+
+# 10 : yes, but labels are off
+# https://open.alberta.ca/dataset/483db988-bcc1-499f-90a4-bf89aa5af3e9/resource/e2a81970-265c-4e93-9477-01f8159a67ac/download/table-4.2.xlsx
+
+# 11 : no, the labels dont really make sense
+# https://open.alberta.ca/dataset/7328ec69-16ea-429a-af68-8948a9649593/resource/3865232a-b222-439c-8695-079721fe5e35/download/tab-90.xlsx
+
+
+# 12 : no, doesnt work without label concat
+# many of these knds of files with non strings for dates really screw with it
+#"R",08/07/2021,"none","REPLACE","coverage",1,2,3,5:6,7:15,"https://open.alberta.ca/dataset/2d28b471-c581-413c-8df5-a6dcbc0ea2cc/resource/23cf72cf-78db-4112-aace-2ead20119160/download/table-4.3.xlsx"
+
+
+# 13: yes, left out since it is quite trivial
+
+
+# 14 : yes, although there is one row in the middle that would potentially interfere with querying the data
+# https://open.alberta.ca/dataset/67baf46c-9fa5-44e0-becd-ab733ef7e464/resource/e3e6108c-cdbe-446a-bea9-d66277145113/download/table-4.9.xlsx
+
+
+# 15 : yes , left out since it is rather trivial
+
+
+# 16 : no , some of the rows do not contain a date value, and instead relies
+# upon the user understanding that the date above it is used
+# perhaps if it is empty, we can use the value above it? 
+
+
+# 17 : yes, simple format
+
+
+# 18 : yes , and one of the few cases where label concat hasnt been needed
+
+
+# 19 : yes, simple format, seen before in sample one i think 
+
+
+# 20 : no , we require label concat , otherwise , yes 
+
+
+## stats
+# 16 / 20 = 80% success
+# list of things to implement: 
+# label concatenation
+# column oriented data
+# more concrete updates
+
+
+
+## SAMPLE 4
+
+# 1 : yes
+#"R",08/07/2021,"yearly","REPLACE","air:passengers",2,4,1,3,5:22,"https://open.alberta.ca/dataset/71bd9fb2-03db-4a3e-9d81-261d88bc79c6/resource/d6c75d75-0672-43de-98cb-578e492e1e8a/download/mktmonitorwithout-letter_aug.xlsx"
+
+# 2 : no , the labels arent suitable , other than this, it works
+# https://open.alberta.ca/dataset/385b0fca-9f38-4862-938c-3ea8cbf5e539/resource/d34e31d4-de79-4c2c-b566-02903ff69f1c/download/table-94-greenhouse-industry-alberta-and-canada.xlsx
+
+# 3 : no, the labels dont align very well
+#https://open.alberta.ca/dataset/5a5b51de-c43c-4dad-9952-a2559d30bcec/resource/1639f38a-272b-4d5b-bf8d-7abd4062d9b7/download/table-2.112.xlsx
+
+
+# 4 : yes
+#"R",08/07/2021,"none","REPLACE","health",34,3,4,7,8:19,"https://open.alberta.ca/dataset/670bf4ce-386d-4bc4-b7f5-7a74edcec722/resource/82f2e529-7548-4437-b789-3d73ca877333/download/compilation-of-stat-supp-tables-2017_2018.xlsx"
+
+# 5 : yes, left out due to simplicity
+
+# 6 : no , label issue
+
+# 7 : yes 
+#"R",08/07/2021,"none","REPLACE","meat:production",1,1,6,4,8:17,"https://open.alberta.ca/dataset/0e3bffc8-fca6-459c-be2d-c08fcea059b4/resource/e3e08b0c-b05e-4b32-a381-e5365f2ed5fc/download/table-25-value-of-manufacturing-sales-for-meat-product-industries-canada-and-provinces.xlsx"
+
+# 8 : no , label issue
+# https://open.alberta.ca/dataset/391f2865-1596-4375-845a-e36d10baa042/resource/1254b4c7-b86c-43cb-88c9-758279053693/download/maprunitscrmdaopen-data-statsupp2018_2019table_2.17.xlsx
+
+# 9 : yes, left out since it is trivial 
+# https://open.alberta.ca/dataset/8dae0ffd-dbb7-46f7-89eb-efa64b2ce385/resource/f251b7d8-bec7-499c-8be3-d169b77048b8/download/ma-population-list-2018.xlsx
+ 
+# 10 : no, label issue
+#"R",08/07/2021,"none","REPLACE","tag",1,2,3,5:6,7:11,"https://open.alberta.ca/dataset/94e7f2e2-6bf5-4b29-8fc0-a7d0319af0cb/resource/e1be23d9-3e03-436a-ac05-66d4885d7cf9/download/table.-2.40.xlsx"
+
+# label concat done here
+
+# 11 : yes, left out due to simple format
+# https://open.alberta.ca/dataset/492139bb-319d-4c3a-b2cb-a17099cd8de2/resource/cb5baf27-355c-496c-be2f-a258415bd52c/download/mefposiabcsds-resnonresvaluespermits20152016-03-10.xlsx
+
+# 12 : yes , left out due its simplicity
+# https://open.alberta.ca/dataset/14366a8e-5f4c-48f2-bacf-78b15226ce9c/resource/fddc78b1-80b0-458a-a158-ca3c555d5e0d/download/births-annual-totals10.xlsx
+
+# 13 : yes, left out due to simplicity
+# https://open.alberta.ca/dataset/03803caa-11f8-47b6-a33d-12e5469d6b6d/resource/21cac293-76a9-46a5-9478-4cb73ee6a093/download/figure-7.2.xlsx
+
+# 14 : yes
+#"R",08/07/2021,"none","REPLACE","medical",1,2,3,5:6,12:43,"https://open.alberta.ca/dataset/2441ac4f-8768-4fba-8243-71f84c21e456/resource/cd188447-49ee-4532-b760-04afe056a914/download/table_2.24b.xlsx"
+
+# 15 : yes, left out due to simplicity
+# https://open.alberta.ca/dataset/e311fc30-7f09-4413-b13e-b4238f076a2c/resource/a8b09ab0-46a4-4463-9325-2e91b436f7b5/download/table_2.3.xlsx
+
+# 16 : yes
+#"R",08/07/2021,"none","REPLACE","medical",1,2:3,4,6:7,8:25,"https://open.alberta.ca/dataset/1b1f6694-8df9-4324-8916-8701c0c4ddc2/resource/ee861bd9-6752-4a99-8194-d4a643c4e673/download/table-3.8.xlsx"
+
+# 17 : yes, simple but takes many entries to get all of the data from
+# https://open.alberta.ca/dataset/c4fd7ef6-607d-4669-8102-0e5636245f69/resource/c313f95a-719d-48f6-9575-bdfdc2b1274d/download/table-26-alberta-food-exports-to-other-countries.xlsx
+
+# 18 : yes, left out due to being simple
+# https://open.alberta.ca/dataset/71bd9fb2-03db-4a3e-9d81-261d88bc79c6/resource/443d5bf2-a83f-427d-b729-2103751b4730/download/mktmonitorwithout-letter_april.revised.xlsx
+
+# 19 : yes, left out due to simplicity
+# https://open.alberta.ca/dataset/7301211e-8263-44b2-a5ca-a091af5254c4/resource/d7dec3d1-710d-4198-b635-b0d5c6b35170/download/highwood-63-data.xlsx
+
+# 20 : same as 19
+
+# stats
+# 15 / 20 = 75% success
+# note that after the new label concat implementation, success rate was 100%
+
+
+# SAMPLE 5
+
+
+# 1 : yes , simple format
+# https://open.alberta.ca/dataset/e4137011-a524-4945-a696-015915588df2/resource/78855844-c90a-487c-b030-bbeba3cb35fb/download/utilization-by-age-sex-2011-2012-to-2013-2014.xlsx
+
+
+# 2 : yes , simple format
+# https://open.alberta.ca/dataset/0aaa90ce-dda9-4d36-a91b-88a19b59c2b8/resource/6f1d1d4a-74be-4118-bf87-136d928055a8/download/table-4.8.xlsx
+
+
+# 3 : yes, population data (simple format)
+# https://open.alberta.ca/dataset/7301211e-8263-44b2-a5ca-a091af5254c4/resource/16b33ebf-8e90-4d5c-a466-06aa15d36c88/download/calgary-hawkwood-15-data.xlsx
+
+
+# 4 : yes but some garbage in the middle i cant get rid of due to the
+# page format this file follows
+#"R",10/07/2021,"never","REPLACE","fiscal:plan",2,1,2:3,4:5,6:END,"https://open.alberta.ca/dataset/396510f0-6ea4-4c3f-bb87-6b7281017108/resource/b211fe80-792f-4e4c-ad96-1c5854d6857d/download/budget-2021-entity-financial-information-2021-22.xlsx"
+
+# 5 : scrapable, but not very queryable, due to the label format
+#"R",10/07/2021,"never","REPLACE","physicians",1,2:3,4,6:7,9:23,"https://open.alberta.ca/dataset/fd81fc05-364c-4a6a-8822-a79dcd6af710/resource/995f196a-1edc-43f6-b0e9-70a6a1ef4ee4/download/table-3.7a.xlsx"
+
+# 6 : right off, broken link
+
+
+# 7 : yes, simple format
+# https://open.alberta.ca/dataset/ffcaf092-af60-4149-aeec-005c8476e321/resource/81b790dd-8ecc-450f-b4eb-80ea92d925a2/download/indigenous-full-load-equivalent-fle-enrolment-within-the-alberta-post-secondary-education-syste.xlsx
+
+
+# 8 : yes , simple format
+# https://open.alberta.ca/dataset/a20ed785-6987-406e-8792-7f675b3c1c03/resource/4a999f72-fc8b-49c9-8346-ef214f3cf1ca/download/life-expectancy-alberta-at-birth-1971-to-current.xlsx
+
+
+# 9 : yes, simple format
+# https://open.alberta.ca/dataset/ba7f0f71-b478-42ce-8445-91bcb9222389/resource/427f2b14-1343-419b-9cf4-fd7027941931/download/goa-publications-2013-q3.xlsx
+
+
+# 10 : yes, simple format
+# https://open.alberta.ca/dataset/c45f2f78-0d6c-4a7e-98bc-313fbb232040/resource/5597096f-59b0-4fa5-b5a6-859a238c8350/download/population-estimates-ab-census-metropolitan-2001-to-current.xlsx
+
+
+# 11 : yes, simple format
+# https://open.alberta.ca/dataset/9d5b3f25-3fa5-4600-a48c-ba200ca6c4a8/resource/87c53ba3-9a1d-457e-9ddd-7ec64d4d8b9e/download/system-headcount-enrolment-within-the-alberta-post-secondary-education-system.xlsx
+
+
+# 12 : not really, labels are pretty off
+#"R",10/07/2021,"never","REPLACE","farm",1,1,,3:6,10:65,"https://open.alberta.ca/dataset/71180f90-802c-41ff-92c7-8eb8513c4273/resource/966b55be-0a1c-44ea-a863-fa035684ac25/download/tab-2-.xlsx"
+
+
+# 13 : yes, simple format 
+# https://open.alberta.ca/dataset/b645e88f-55ae-4821-8255-b425488b6176/resource/779d9cf3-0f33-4164-b77b-9790bba2a26c/download/afa-2015-2016-funding-summary-by-region-od.xlsx
+
+
+# 14 : no, there will be duplicate labels because there are fully empty 
+# columns in it, perhaps we can scan the data and remove it?
+# https://open.alberta.ca/dataset/45cd103e-b79c-4714-bb45-a05b229d1750/resource/26e100a6-534f-4dc7-9c35-d0ed37552589/download/tab-41.xlsx
+
+
+# 15 : yes, simple format but requires a few entries to capture all of the data
+# https://open.alberta.ca/dataset/71bd9fb2-03db-4a3e-9d81-261d88bc79c6/resource/6d357631-a85c-4d7e-b5de-5a2c50fbf92e/download/mtourism_newoperationsdata-analysisalberta-tourism-market-monitor2018janfinalmktmonitorwithout-.xlsx
+
+
+# 16 : yes, simple format
+# https://open.alberta.ca/dataset/5c856875-786c-40f8-822e-a2d4bd305d68/resource/604584a2-d054-4d60-92b1-cf1f696b94f8/download/2020-2046-13-economic-region-population-projections-medium.xlsx
+
+
+# 17 : yes, simple format
+# https://open.alberta.ca/dataset/66113ea4-c1a6-48d6-bbbe-85fc100ea3e0/resource/2f516f50-ac02-40f9-839c-421bc9813bab/download/migrants-by-component-economic-regions-1996-to-current.xlsx
+
+
+# 18 : captures the data, but has a dead column
+# https://open.alberta.ca/dataset/ef523b7c-5f12-4eb7-b5f3-1b33249bd405/resource/9a0e8f6d-2ce2-4ace-96ac-a3e79384a1ad/download/longitudinal-employment-analysis-program-2001-to-20102012-08-28.xlsx
+
+
+# 19 : yes
+# https://open.alberta.ca/dataset/9bae0be8-7b3b-44fd-a4b3-536a831ff4c5/resource/265020fd-79f8-4a0e-872a-5ccb045a35f7/download/maprunitscrmdaopen-data-statsupp2018_2019table_2.22.xlsx
+
+
+# 20 : yes
+#"R",10/07/021,"never","REPLACE","population",1,2,3,5:6,7:10,"https://open.alberta.ca/dataset/c95001de-e2aa-4846-8275-271ccd047365/resource/483ff854-a8b7-4c2b-98f3-141ceadf9765/download/table-1.2.xlsx"
+
+
+# 21 : yes, simple format
+# https://open.alberta.ca/dataset/85b4b47f-98de-40b1-bef4-09929c226019/resource/ed478766-a9bd-47db-afb7-359bf41af823/download/trace-element-13-to-15.xlsx
+
+
+# stats: 17 / 20 = 85% very usable, others scrapable but not very clean
+
+
+## TOTAL STATS
+# 83 / 100 , more likely aroud 90 / 100 since I implemented label concatenation
+# and fixed up the column oriented data
+
+
+
+## testing the tables we couldn't scrape
+
+# this one works, but there are a few entries in the middle that shouldn't be there.
+# perhaps we can choose to not include a row if over half of the entries are blank
+# https://open.alberta.ca/dataset/7328ec69-16ea-429a-af68-8948a9649593/resource/3865232a-b222-439c-8695-079721fe5e35/download/tab-90.xlsx
+#
+# this one works
+# https://open.alberta.ca/dataset/391f2865-1596-4375-845a-e36d10baa042/resource/02571278-1886-42a8-9e47-dd4cc2427cd7/download/table_2.17.xlsx
+#"R",13/07/2021,"never","REPLACE","medical",1,2:3,4,6:8,9:42,"https://open.alberta.ca/dataset/391f2865-1596-4375-845a-e36d10baa042/resource/02571278-1886-42a8-9e47-dd4cc2427cd7/download/table_2.17.xlsx"
+#
+#
+# This one works fine
+#"R",13/07/2021,"yearly","REPLACE","ahd",1,"ahs injury report",,1,2:END,"https://open.alberta.ca/dataset/a2772d8c-48be-4d39-bcf2-dafca456d724/resource/fb8cd062-039a-4f4f-b012-a4220fdc8a67/download/msfhwbidata-analyticsdataemployer-recordopen-data2019_ohs-employer-record-open-data.xlsx"
+#
+# This one works fine
+# https://education.alberta.ca/media/3273029/diploma-multiyear-auth-list-annual.xlsx
+#
+#
+# this one works
+#"R",13/07/2021,"never","REPLACE","medicine:finance",1,2,3,5:6,12:43,"https://open.alberta.ca/dataset/9bae0be8-7b3b-44fd-a4b3-536a831ff4c5/resource/eb85f89e-45a6-43ed-b39e-79bef1de2d70/download/maprcommoninformation-productsstatistical-supplement-tablestable-2.22.xlsx"
+#
+# this one works, but requires many entries in order to be fully captured 
+# https://open.alberta.ca/dataset/7328ec69-16ea-429a-af68-8948a9649593/resource/3865232a-b222-439c-8695-079721fe5e35/download/tab-90.xlsx
+#
+#
+# this one works fine
+#"R",13/07/2021,"never","REPLACE","coverage",1,2,3,5:6,7:15,"https://open.alberta.ca/dataset/2d28b471-c581-413c-8df5-a6dcbc0ea2cc/resource/23cf72cf-78db-4112-aace-2ead20119160/download/table-4.3.xlsx"
+#
+#
+# https://open.alberta.ca/dataset/385b0fca-9f38-4862-938c-3ea8cbf5e539/resource/d34e31d4-de79-4c2c-b566-02903ff69f1c/download/table-94-greenhouse-industry-alberta-and-canada.xlsx
+# this one is tricky, the title is in the same column as the labels, it works, but only as row data
+#"C",13/07/2021,"never","REPLACE","greenhouse:gas",1,1,,1:2,3:14,"https://open.alberta.ca/dataset/385b0fca-9f38-4862-938c-3ea8cbf5e539/resource/d34e31d4-de79-4c2c-b566-02903ff69f1c/download/table-94-greenhouse-industry-alberta-and-canada.xlsx"
+#
+#
+#
+# this one works
+# https://open.alberta.ca/dataset/5a5b51de-c43c-4dad-9952-a2559d30bcec/resource/1639f38a-272b-4d5b-bf8d-7abd4062d9b7/download/table-2.112.xlsx
+#
+#
+#
+#
+# this one works
+# https://open.alberta.ca/dataset/391f2865-1596-4375-845a-e36d10baa042/resource/1254b4c7-b86c-43cb-88c9-758279053693/download/maprunitscrmdaopen-data-statsupp2018_2019table_2.17.xlsx
+#
+#
+#
+# this one works
+#"R",13/07/2021,"never","REPLACE","tag",1,2,3,5:6,7:11,"https://open.alberta.ca/dataset/94e7f2e2-6bf5-4b29-8fc0-a7d0319af0cb/resource/e1be23d9-3e03-436a-ac05-66d4885d7cf9/download/table.-2.40.xlsx"
+#
+#
+#
+#
+# 
+# this one works
+#"R",13/07/2021,"never","REPLACE","farm",1,1,,3:6,10:65,"https://open.alberta.ca/dataset/71180f90-802c-41ff-92c7-8eb8513c4273/resource/966b55be-0a1c-44ea-a863-fa035684ac25/download/tab-2-.xlsx"
+#
+#
+# this one works too
+# https://open.alberta.ca/dataset/45cd103e-b79c-4714-bb45-a05b229d1750/resource/26e100a6-534f-4dc7-9c35-d0ed37552589/download/tab-41.xlsx
+
+
+
+
+## SAMPLE 6 - some CSV files from ODA
+
+
+# 1 : yes
+#"R",13/07/2021,"never","ADD","greenhouse",1,"greenhouse emissions ratings",,1,2:END,"http://regionaldashboard.alberta.ca/export/opendata/Greenhouse%20Gas%20Emissions/csvs"
+
+# 2 : yes , left out due to simplicity
+
+# 3 : yes, left out due to simplicity
+
+# 4 : yes, left out due to simplicity
+
+# 5 : broken link
+
+# 6 : yes, left out due to simplicity
+
+# 7 : yes, left out due to simplicty
+
+# 8 : yes, left out due to simplicty 
+
+# 9 : yes, left out due to simplicty
+
+# 10 : yes, left out due to simplicity
+
+# 11 : yes, left out due to simplicity 
+
+# 12 : yes, left out due to simplicity
+
+# 13 : yes, left out due to simplicity
+
+# 14 : yes, left out due to simplicity
+
+# 15 : yes, left out due to simplicity
+
+# 16 : i think so? this file format is pretty wack
+
+# 17 : yes, left out due to simplicty
+
+# 18 : i think so , same as 16
+
+# 19 : i think so, same as 18
+
+# 20 : yes
+#"R",13/07/2021,"never","ADD","sometag",1,"title","desc",1,2:END,"https://open.alberta.ca/dataset/e2844d33-3524-40a1-9a8e-5002f13c89f8/resource/40e5bf59-6ed3-4af5-8e25-8edb3bc539d8/download/2012esrdfishstocking.csv"
+
+# all of the maybes are a yes
+
+
+# testing some of the update functionality on some tables from the bank of canada
+# daily interest rates
+"R",13/07/2021,"daily","ADD","interest:rates:bank:Canada",1,"interest rates from bank of canada",,1,2:END,""https://www150.statcan.gc.ca/t1/tbl1/en/dtl!downloadDbLoadingData-nonTraduit.action?pid=1010013901&latestN=0&startDate=19990101&endDate=20300713&csvLocale=en&selectedMembers=%5B%5B1%5D%2C%5B12%2C13%2C14%2C15%2C16%2C17%2C18%2C19%2C20%2C21%2C22%2C23%2C24%2C25%2C26%2C27%2C28%2C29%2C30%2C31%2C32%2C33%2C34%2C36%2C37%2C38%2C39%5D%5D
+
