@@ -554,7 +554,7 @@ we use REPLACE when rows are appended, and the old data remains in the file. In
 a sense we erase all of the existing data in the database, and then add all of 
 the new data. The reason we replace all of the data instead of just inserting
 new rows is incase they make changes to the existing data. If the data will not
-change (i.e rows that arent appended) then use 'ADD' instead, it will be much 
+changed (i.e rows that arent appended) then use 'ADD' instead, it will be much 
 faster
 '''
 def update_cells_replace(table_id, content, labels, curs):
@@ -604,26 +604,37 @@ def update_cells_add(table_id, content, curs):
         table_id))
     row_id = curs.fetchone()[0]
 
-    # get all of the rows associated with this table
-    curs.execute("SELECT * FROM cells WHERE table_id = {} and row_id = {}".format(
-        table_id,row_id))
+    # rowid will be None if the table is empty
+    # we dont want the row to match at a
+    if not row_id:
+        max_index = -1
+        row_id = 0
+
+    else:
+
+        # get all of the rows associated with this table
+        curs.execute("SELECT * FROM cells WHERE table_id = {} and row_id = {}".format(
+            table_id,row_id))
 
 
-    # reconstruct the last row for matching purposes
-    last_row = curs.fetchall()
-    con_row = [x[3] for x in last_row]
+        # reconstruct the last row for matching purposes
+        last_row = curs.fetchall()
+        con_row = [x[3] for x in last_row]
 
-    # the index of which specifies the start of the new rows
-    # since we add 1, in theory if we dont get a match, we add the whole
-    # table
-    max_index = -1
 
-    
-    # find the index of the last matched row in the data
-    for i in range(len(content) - 1 , 0, -1):
-        if content[i] == con_row:
-            print("The matching row was row number {}".format(i))
-            max_index = i
+
+        # the index of which specifies the start of the new rows
+        # since we add 1, in theory if we dont get a match, we add the whole
+        # table
+        max_index = -1
+
+        
+        # find the index of the last matched row in the data
+        for i in range(len(content) - 1 , 0, -1):
+            if content[i] == con_row:
+                print("The matching row was row number {}".format(i))
+                max_index = i
+
     
     # add any new rows to the data
     for row in content[max_index + 1:]:
@@ -707,7 +718,7 @@ def enter_data(title, description, update_frequency, keywords, labels,
 
 
     # ensure we use the correct update type
-    if update_type == "REPLACE" or entry_type == "create":
+    if update_type == "REPLACE":
         update_cells_replace(table_id, content, labels, curs)
 
     elif update_type == "ADD":
@@ -768,6 +779,10 @@ gets the rowid of the row containing the specified URL
 
 this is used when writing the file to storage, since we use the rowid as 
 the file name when saving it
+
+
+NOTE: This function will fail if the number of entries exceeds 2^32 - 1 , since
+sqlite will randomly try different numbers until it finds one it can use.
 '''
 def get_rowid(url, curs):
     global max_row_id
@@ -967,7 +982,6 @@ Not tested, didnt find any pure column oriented data
 '''
 def columm_to_row(columns):
     rows = np.transpose(columns) 
-
     return rows
 
 
@@ -1013,11 +1027,10 @@ def unzip_and_extract(url, filename):
     filebytes = BytesIO(res_byte)
     myzipfile = zipfile.ZipFile(filebytes)
 
-
     # extract the file
     extracted_file = myzipfile.open(filename)
 
-    # read the data 
+    # read the data as bytes and return it
     data = extracted_file.read()
 
     return data
