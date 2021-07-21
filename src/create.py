@@ -1,10 +1,28 @@
+'''
+this program is designed to be run whenever a new line is added to the 
+mapping file
+
+the program will add any new entries to the existing database
+
+DO NOT use this program to update the database, for any entry, if the update
+type is 'ADD' then data will be lost.
+'''
+
+
+
+
 from system import *
+
+
+
 '''
 driver function
 '''
 def main():
 
     # if the tables directory does not exist, create one
+    # we store all files we scrape on the users local machine incase they
+    # want the full file
     try:
         os.mkdir("./tables")
     except FileExistsError:
@@ -12,7 +30,7 @@ def main():
 
 
 
-    # try opening the file
+    # try opening the mapping file
     try:
         f = open("mapping.csv", "r")
 
@@ -44,28 +62,41 @@ def main():
         # comments start with #
         if line[0] == '#':
             continue
-
+        
+        # D@URL will delete any entry associated with that URL from the database
         elif line[0] == "D" and line[1] == "@":
             delete_entry(line[2:], curs)
             continue
 
+        # clean up the values a bit, incase the user provides dirty data
         values = line.strip().replace("\"", "").split(',')
-        if len(values) > 0 and len(values) < 9:
+
+
+        # we require atleast 9 fields in order for the entry to be a valid one
+        # with the last field being the URL
+        if len(values) > 0 and len(values) < 11:
+
+            # skip lines that start spaces
             if values[0] == '' and len(values) == 1:
                 continue
             print("Error on line {} please check formatting!".format(index + 1))
             continue
-
+        
+        
+        # validate the data and process the entry
         validate_input(values)
         process_entry(values, curs, "create")
 
         
-
+    # housekeeping
     conn.commit()
     curs.close()
     conn.close()
     f.close()
 
+
+    # updates the 'LAST-PARSED' field in the mapping file for every entry
+    # not currently used for anything in the code
     update_parse("mapping.csv")
 
 

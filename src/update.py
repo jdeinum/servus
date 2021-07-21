@@ -1,18 +1,14 @@
 '''
 The purpose of this script is to update the data in our database
 
-This script will be run every day at midnight.
+This script should be run every day at midnight to ensure you continue
+updating the data in the database.
 
-Each entry in MASTER.sqlite has an associated update frequency,
-daily = 1
-weekly = 2
-monthly = 3
-quarterly = 4
-twice a year = 5
-yearly = 6 
+Data will still be updated even if the entry in the mapping file is deleted.
+If you want to stop updating data, update the parse frequency to 'never' in 
+the database for that entry
 
-Currently, for simplicity, I just choose times to update these values. i.e daily at midnight, weekly on monday at
-midnight, etc..  - This can be adjusted for data that is required to be up to date immediately
+
 '''
 
 from datetime import date

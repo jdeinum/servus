@@ -1,3 +1,15 @@
+''' 
+this file contains most if not all of the program logic
+
+
+python is not my primary language, and i am not too familiar with its 
+tooling, i've left formal documentation in hope that my inline documentation 
+is sufficient
+
+
+'''
+##############################################################################
+# IMPORTS
 from abc import ABC, abstractmethod
 import numpy as np
 import requests
@@ -11,7 +23,7 @@ import math
 from website import *
 from datetime import date
 import os
-
+import zipfile
 
 ##############################################################################
 # CONSTANTS / GLOBALS
@@ -20,15 +32,16 @@ DATE_LAST_PARSED= 1
 CRAWL_FREQUENCY = 2
 UPDATE_TYPE= 3
 INDUSTRY_CLASS = 4
-SHEET_NUMBER = 5
-TABLE_NAME = 6
-TABLE_DESCRIPTION = 7
-LABELS = 8
-CONTENT = 9
-URL = 10
-RELATIVE = 11
-FILE_TYPE = 12
-CUT = 13
+ZIPPED = 5
+FILE_TYPE = 6
+SHEET_NUMBER = 7
+TABLE_NAME = 8
+TABLE_DESCRIPTION = 9
+LABELS = 10
+CONTENT = 11
+URL = 12
+RELATIVE = 13
+CUT = 14
 
 
 max_row_id = None # used for caching
@@ -40,6 +53,9 @@ max_row_id = None # used for caching
 
 '''
 represents any way to get a location in a file
+
+we use 2 locations (start and end) for each field (title, desc, content, etc)
+to mark the start and end of that field in the data
 '''
 class Location():
     
@@ -58,14 +74,6 @@ class Location():
     def get_index(self):
         pass
 
-    '''
-    describe how to return a string if there exists one
-    '''
-    @abstractmethod
-    def get_string(self):
-        pass
-
-
 '''
 represents a location within a file identified by a row number
 '''
@@ -80,12 +88,17 @@ class RowNumber(Location):
     def get_index(self):
         return self.number
 
-    def get_string(self):
-        return None
+
     
 
 '''
 represents a location within a file identified by a tag and offset
+
+i.e finding a row by matching a string in the first column, and then you
+can seek relative to that location
+
+ex) "NAME"-1 would find the row where the first cell contains only NAME and 
+go up one row
 '''
 class TagAndOffset(Location):
     tag = None
@@ -113,6 +126,10 @@ class TagAndOffset(Location):
 
 '''
 Returns a list of URLs to parse information from
+
+Unless a wildcard is used, there will only be one url to scan per entry
+
+If a wildcard is used, it finds each valid URL to scrape from
 '''
 def get_urls_list(base_url, row):
     base_url = row[URL]
@@ -171,23 +188,30 @@ def get_urls_list(base_url, row):
 data will be a 3D list, a list of sheets, where each sheet contains a 
 list of rows
 
-csv files dont have sheets, but have been compatible with this function
+csv files dont have sheets, but have been made compatible with this function
+
+currently it can be a 2D list, but I left it this way incase servus wants to 
+be able to grab fields from multiple sheets i.e title from sheet 1, description
+from sheet 2, etc ... 
 '''
 def get_data(start, end, data, number=0):
+
+    # index is -1 in the case where some location in a file cannot be found
+    # returning None will signal the program to insert Null
     if start < 0 or end < 0:
         return None
     return data[number][start:end]
 
 
 '''
-find the required data that was specified
+find the required data that was specified in the mapping file
 '''
 def find_data(data, string, sheet):
     
     # ranges are seperated by ":"
     split = string.split(":")
 
-    # each entry should atleast have one location on the left
+    # each entry should atleast have one location on the left, i.e start
     start = get_location_object(split[0], data, sheet)
 
     # if start is a string, the user entered a string in this field
@@ -202,7 +226,8 @@ def find_data(data, string, sheet):
 
 
     # not a string
-    # and no range was specified, just return the row of data in the file
+    # and no range was specified, which means the user provided a single row
+    # just return the row of data in the file
     if len(split) == 1:
         return get_data(start.get_index() - 1, start.get_index(), data, sheet)
     
@@ -213,20 +238,27 @@ def find_data(data, string, sheet):
     # return the data between the start and end locations
     try:
         return get_data(start.get_index() - 1, end.get_index(), data, sheet)
-    except Exception as e:
+
+    except Exception:
         print("A row number must be specified using a number or 'END'")
         exit(1)
+    
 
 
 '''
 finds and returns the type of location object by parsing 'string'
+
+the program will take a look at the string passed and return either:
+
+a) a row number object
+b) a tag and offset object
 '''
 def get_location_object(string, data, sheet):
 
 
     location = None
 
-    # tag and offset
+    # if there a + in the string, it is a range
     if "+" in string:
         split= string.split("+")
         tag = split[0]
@@ -266,7 +298,7 @@ Processes a single line of our mapping file
 '''
 def process_entry(row_passed, curs, entry_type):
 
-    # get the url from the mapping file
+    # we need the URL to get the data from the web
     try:
         base_url = row_passed[URL]
     except:
@@ -283,9 +315,24 @@ def process_entry(row_passed, curs, entry_type):
 
         # data is a list of rows (which are also lists)
         data = None
-        if "csv" in url:
-           data = parse_csv(url, curs)
 
+        # unzip the data if needed, and change the filename
+        zipped = row_passed[ZIPPED].split(":")
+        if zipped[0] == "yes":
+            filename = zipped[1]
+            byte_data = unzip_and_extract(url, filename)
+
+            if "csv" in filename:
+                data = parse_csv(url, curs, byte_data)
+
+            elif "xlsx" in filename:
+                data = parse_xlsx(url, curs, byte_data)
+        
+        # file is a csv
+        elif "csv" in url:
+           data = parse_csv(url, curs)
+        
+        # file is an xlsx
         elif "xlsx" in url:
             data = parse_xlsx(url, curs)
 
@@ -334,6 +381,9 @@ def process_entry(row_passed, curs, entry_type):
 
 '''
 constructs a string from a 2D list
+
+we use this for our title and description so each of these fields can 
+span multiple rows
 '''
 def construct_string(data):
 
@@ -355,6 +405,8 @@ res_bytes is the byte representation of the file
 we require the url to know what to name the table
 '''
 def write_to_file(res_bytes, url, curs):
+    
+    # we use the rowid in the tables table as the name for our file
     name = get_rowid(url, curs)
 
     # get the file extension
@@ -368,7 +420,7 @@ def write_to_file(res_bytes, url, curs):
     if not file_type:
         raise Exception("Unsupported file type!")
 
-
+    # write to file
     string = "tables/" + str(name) + "." + file_type
     f = open(string, "wb") 
     f.write(res_bytes)
@@ -379,13 +431,28 @@ def write_to_file(res_bytes, url, curs):
 '''
 parses an xlsx file and returns a list of lists of rows (also lists)
 '''
-def parse_xlsx(url, curs):
-    res = requests.get(url)
-    res_byte = BytesIO(res.content).read()
+def parse_xlsx(url, curs, bytes_data=None):
+    
+    # bytes data gets passed if the file was zipped
+    # in that case we can do not need to request it again
+    if not bytes_data:
 
+        # request and get the data
+        res = requests.get(url)
+        res_byte = BytesIO(res.content).read()
+
+    
+    else:
+        
+        res_byte = bytes_data
+
+
+
+    # write the data to file
     write_to_file(res_byte, url, curs)
-
-    values = pd.read_excel(BytesIO(res.content), usecols=None, header=None,
+    
+    # read the excel file
+    values = pd.read_excel(res_byte, usecols=None, header=None,
         sheet_name=None)
     clean_combined = []
 
@@ -406,24 +473,38 @@ def parse_xlsx(url, curs):
             clean.append(new_row)
         
         clean_combined.append(clean)
+
+    # as with CSVs , we return a list containing a list of rows
     return clean_combined
 
 
 '''
 Parses a csv file and returns a list of lists of rows (also lists)
 '''
-def parse_csv(url, curs):
+def parse_csv(url, curs, bytes_data=None):
+    
+    # bytes data is passed if the file was zipped
+    if not bytes_data: 
 
-    # read in the entire csv file
-    data = urlopen(url).read()
-    res_bytes = BytesIO(data).read()
-    write_to_file(res_bytes, url, curs)
+        # read in the entire csv file
+        data = urlopen(url).read()
+        res_bytes = BytesIO(data).read()
 
+    else:
 
+        res_bytes = bytes_data
+        data = res_bytes
+
+    # write the bytes to file
+    write_to_file(res_bytes, url, curs,)
+
+    # decode the bytes so csv can interpret them
     data_file = StringIO(data.decode('ascii', 'ignore'))
     csvReader = csv.reader(data_file)
     rows = []
-
+    
+    # we return a list containing a list of rows, for future support
+    # of choosing specific sheets for each field in xlsx files
     for row in csvReader:
         rows.append(row)
 
@@ -439,7 +520,7 @@ def parse_csv(url, curs):
 '''
 update data in our tables metadata table
 
-this function is used for both 'ADD' and 'REPLACE' updates
+this function is used for both 'ADD' and 'REPLACE' update types
 '''
 def update_tables(title, description, update_frequency,
         curs, url, crawl_freq, row_passed):
@@ -467,7 +548,14 @@ def update_tables(title, description, update_frequency,
 
 
 '''
-updates the data in the cells table
+updates the data in the cells table that use the replace update type
+
+we use REPLACE when rows are appended, and the old data remains in the file. In
+a sense we erase all of the existing data in the database, and then add all of 
+the new data. The reason we replace all of the data instead of just inserting
+new rows is incase they make changes to the existing data. If the data will not
+change (i.e rows that arent appended) then use 'ADD' instead, it will be much 
+faster
 '''
 def update_cells_replace(table_id, content, labels, curs):
 
@@ -509,7 +597,7 @@ We do not want to delete all of the previous data, and instead want to add
 all of the new rows to the existing data
 
 '''
-def update_cells_add(table_id, content, labels, curs):
+def update_cells_add(table_id, content, curs):
 
     # get the rowid
     curs.execute("SELECT max(row_id) FROM cells WHERE table_id = {}".format(
@@ -521,20 +609,28 @@ def update_cells_add(table_id, content, labels, curs):
         table_id,row_id))
 
 
+    # reconstruct the last row for matching purposes
     last_row = curs.fetchall()
-
     con_row = [x[3] for x in last_row]
+
+    # the index of which specifies the start of the new rows
+    # since we add 1, in theory if we dont get a match, we add the whole
+    # table
     max_index = -1
 
     
+    # find the index of the last matched row in the data
     for i in range(len(content) - 1 , 0, -1):
         if content[i] == con_row:
+            print("The matching row was row number {}".format(i))
             max_index = i
-
+    
+    # add any new rows to the data
     for row in content[max_index + 1:]:
         for index, val in enumerate(row):
             curs.execute("INSERT INTO cells VALUES ( {}, {}, {}, ?)".format(
-                table_id,row_id + 1,index),(val))
+                table_id,row_id + 1,index),(val,))
+
 
         row_id += 1
             
@@ -610,36 +706,46 @@ def enter_data(title, description, update_frequency, keywords, labels,
     update_keywords(table_id, keywords, curs)
 
 
-
+    # ensure we use the correct update type
     if update_type == "REPLACE" or entry_type == "create":
         update_cells_replace(table_id, content, labels, curs)
 
     elif update_type == "ADD":
-        update_cells_add(table_id, content, labels,curs)
+        update_cells_add(table_id, content, curs)
 
     
 
 '''
-updates the last-date-crawled field 
-
-I have yet to implement a parse rule dealing with the last date that
-an entry was parsed.
+updates the last-date-crawled field, currently this doesn't do anything other
+than let the people looking at the mapping file know when the last time they 
+crawled it
 '''
 def update_parse(filename):
+
+    # read in the current file
     fin = open(filename)
     data = fin.readlines()
-    new_data = []
 
+
+
+    new_data = []
+    
     for line in data:
+
+        # comments can just be added
         if line[0] == "#":
             new_data.append(line)
             continue
-
+    
+        
         split = line.split(",")
-        if len(split) < 8:
+
+        # lines that don't contain entries can just be added to the new data
+        if len(split) < 11:
             new_data.append(line)
             continue
-
+        
+        # replace the date with todays date for any entry
         else:       
             split[1] = date.today().strftime("%d/%m/%Y")
         line =  ",".join(split)
@@ -647,7 +753,9 @@ def update_parse(filename):
             
 
     fin.close()
-
+    
+    # reopen the file in write mode
+    # and write the new data
     fout = open(filename, "w")
     for line in new_data:
         fout.write(line)
@@ -657,9 +765,16 @@ def update_parse(filename):
 
 '''
 gets the rowid of the row containing the specified URL
+
+this is used when writing the file to storage, since we use the rowid as 
+the file name when saving it
 '''
 def get_rowid(url, curs):
     global max_row_id
+
+
+    # if this query succeeds, then the url already has an entry
+    # we use that for the filename
     curs.execute("SELECT rowid FROM tables WHERE url = \"{}\"".
             format(url))
     number = curs.fetchone()
@@ -672,15 +787,23 @@ def get_rowid(url, curs):
     else:
 
         # avoid queries if we can
+        # max_row_id is the locally stored value of the next rowid to be used
         if max_row_id:
             max_row_id += 1
             return max_row_id
 
         curs.execute("SELECT max(rowid) FROM tables")
         max_id = curs.fetchone()[0]
+
+        # max_id will be None if it is a new table
+        # sqlite defaults rowid to 1 in this case
         if not max_id:
             max_row_id = 1
             return 1
+
+
+        # use the next row number as the id
+        # and save the rowid to use for later
         else:
             max_id = int(max_id)
             max_row_id = max_id + 1
@@ -688,10 +811,18 @@ def get_rowid(url, curs):
 
 '''
 updates all data in our database with a specific crawl frequency
+
+this function is called from update.py , we could probably move this function
+to that file and just import system.py
 '''
 def update(frequency):
+
+    # open a new connection to the database
     conn = sqlite3.connect("MASTER.sqlite")
     curs = conn.cursor()
+
+    # fails if the user tries to update the data before the tables are even
+    # created, in that case, they need to run create.py before running update
     try:
         curs.execute("SELECT row FROM tables WHERE crawl_frequency = '{}';".format(frequency))
     except:
@@ -702,9 +833,11 @@ def update(frequency):
     # unpack the tuples
     result = [x[0] for x in result]
 
-    # remove duplicates
+    # remove duplicates, this is more of a failsafe 
     result = list(set(result))
-
+    
+    # for each entry in the database that matches the update frequency, 
+    # update it
     for row in result:
         values = row.split(",")
         process_entry(values, curs, "update")
@@ -727,7 +860,7 @@ def delete_entry(url, curs):
 
     # get the row numbers of the url we are removing
     # so we can delete the files from the tables/ directory
-    curs.execute("SELECT * FROM tables WHERE url LIKE \"{}%\"".format(url))
+    curs.execute("SELECT rowid FROM tables WHERE url LIKE \"{}%\"".format(url))
     tables = curs.fetchall()
 
     # delete the files off their local system
@@ -739,7 +872,7 @@ def delete_entry(url, curs):
 
 
 
-    
+    # wildcard in delete statement, delete any entries matching the wildcard 
     if "/*" in url:
         url = url.replace("/*", "").strip()
 
@@ -755,6 +888,15 @@ def delete_entry(url, curs):
 '''
 given n rows with m columns, it will return a single row with m columns,
 where each column is a - seperated list of the joined column values
+
+
+i.e 
+
+1 2 3 BLANK 5 6 7
+a b c d     e f g
+
+will return:
+1a 2b 3c 3d 5e 6f 7g
 '''
 def label_concat(rows):
 
@@ -770,24 +912,31 @@ def label_concat(rows):
 
     # fill in any blanks, start by using the same row
     # if column 2 is empty, we use the value in column 1, 4 we use 3 ...
-    # if the first column is empty ... then that is a problem
+    # if the first column is empty ... then we stick our head in the sand
     for row in rows:
         
         
         # replace the blanks
         for index, val in enumerate(row):
-
+            
+            # convert any dates or numbers to strings to allow concatenation
             if type(val) != str:
                 row[index] = str(val)
-
+            
+            # we also want to find the last column with a non empty value,
+            # since we will truncate each row to this length to avoid having
+            # the database cluttered with 
             if index > max_row_length and val != '':
                 max_row_length = index + 1
 
+
+            # value is emptry, replace it with the previous value
             if val == '' and index > 0:
                 row[index] = row[index - 1] 
 
     max_row_length += 1
-
+        
+    # truncate the data 
     for row in rows:
         row = row[0:max_row_length]
         cleaned_rows.append(row)
@@ -812,7 +961,9 @@ def label_concat(rows):
 converts column oriented data into row data
 
 as long as the user specifies all of the locations using column numbers instead
-of row numbers, simply taking the transpose would would
+of row numbers, simply taking the transpose should work.
+
+Not tested, didnt find any pure column oriented data
 '''
 def columm_to_row(columns):
     rows = np.transpose(columns) 
@@ -837,7 +988,7 @@ def validate_input(row):
     if row[2] not in update_freqs:
         print("update type must be:")
         for x in update_freqs:
-            print("\"{}\" ", x)
+            print("\"{}\" ".format(x))
         exit(1)
 
     # update type
@@ -847,5 +998,32 @@ def validate_input(row):
 
     
     return
+
+
+'''
+unzips and extracts a file into the given directory
+'''
+def unzip_and_extract(url, filename):
+        
+    # request and get the data
+    res = requests.get(url)
+    res_byte = BytesIO(res.content).read()
+
+    # convert into a zipfile
+    filebytes = BytesIO(res_byte)
+    myzipfile = zipfile.ZipFile(filebytes)
+
+
+    # extract the file
+    extracted_file = myzipfile.open(filename)
+
+    # read the data 
+    data = extracted_file.read()
+
+    return data
+
+    
+
+
 
 

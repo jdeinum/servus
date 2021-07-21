@@ -1,3 +1,16 @@
+'''
+this file contains an implementation of a crude webscraper i put together that
+is used to get the data from the web
+
+If the crawler is a bottleneck, consider using Twisted async and send request 
+in parallel or use something like scrapy. 
+
+
+'''
+
+
+
+
 import time
 import urllib.request
 from bs4 import BeautifulSoup
@@ -111,6 +124,8 @@ class Crawler:
 
 
     # writes all of the scraped URLs to file
+    #
+    # probably wont use this unless you're sampling some data source
     def write_to_file(self):
         try:
             # remove the old csv url file if there is one
