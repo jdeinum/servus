@@ -10,11 +10,10 @@ is sufficient
 '''
 ##############################################################################
 # IMPORTS
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 import numpy as np
 import requests
 import sqlite3
-from ast import literal_eval as make_tuple
 from urllib.request import urlopen
 from io import StringIO, BytesIO
 import csv
@@ -377,7 +376,7 @@ def process_entry(row_passed, curs, entry_type):
         # enter data into our DB
         enter_data(title, description, frequency, keywords, labels, content,
                  curs, url,crawl_frequency,",".join(row_passed), 
-                 row_passed[UPDATE_TYPE], entry_type)
+                 row_passed[UPDATE_TYPE])
 
 
 
@@ -528,6 +527,11 @@ this function is used for both 'ADD' and 'REPLACE' update types
 '''
 def update_tables(title, description, update_frequency,
         curs, url, crawl_freq, row_passed):
+
+    row_passed_split = row_passed.split(",")
+    row_passed_split[DATE_LAST_PARSED] = date.today().strftime("%d/%m/%Y")
+    row_passed = ",".join(row_passed_split)
+
 
     # first enter the metadata details into our metadata tables
     curs.execute("INSERT INTO tables VALUES (NULL,\"{}\", \"{}\", \"{}\", \"{}\", \"{}\",\"{}\") ON CONFLICT DO UPDATE SET \
@@ -712,7 +716,7 @@ def update_keywords(table_id, keywords, curs):
 enters the acquired data into our SQLite DB
 '''
 def enter_data(title, description, update_frequency, keywords, labels, 
-        content, curs, url, crawl_freq,row_passed, update_type, entry_type):
+        content, curs, url, crawl_freq,row_passed, update_type):
 
     # insert / update our data
     table_id = update_tables(title, description,update_frequency,
