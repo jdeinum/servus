@@ -1,7 +1,7 @@
 # Any line starting with a "#" is a comment, and has no effect on the program
 # 
-#       1              2                3               4         5            6         7         8         9       10     11       12           13        14
-# ROW-ORIENTED, LAST-CRAWL-DATE, CRAWL-FREQUENCY, UPDATE-TYPE, KEYWORDS, SHEET_NUMBER, TITLE, DESCRIPTION, LABELS, CONTENT, URL, [RELATIVE], [FILE-TYPE], [CUT]
+#       1              2                3               4         5         6        7         8          9       10           11       12     13      14       15    
+# ROW-ORIENTED, LAST-CRAWL-DATE, CRAWL-FREQUENCY, UPDATE-TYPE, KEYWORDS, ZIPPED, FILE_TYPE SHEET_NUMBER, TITLE, DESCRIPTION, LABELS, CONTENT, URL, [RELATIVE], [CUT]
 #
 # 1: ROW-ORIENTED
 # Should be "R" if the data is row oriented. "C" if the data is column oriented
@@ -35,13 +35,23 @@
 #
 # Seperate keywords with a colon ( : ), i.e oil:energy:gas
 #
-# 6: SHEET-NUMBER:
+# 6: ZIPPED
+# "no" if the file is not in a zipped archive
+#
+# "yes:FILENAME" if the file with FILENAME is contained within a zip archive
+#
+# 7: FILE_TYPE
+# The type of file we are parsing / scraping
+# Currently only xlsx and csv files are supported
+#
+#
+# 8: SHEET-NUMBER:
 # Only appplicable for xlsx files, leave blank for csv
 #
 # Specify the sheet number where the data is found
 # 
 #
-# 7/8/9/10: DATA
+# 9/10/11/12: DATA
 # Provide either a string, or a method to find the location of each column 
 # within the file. 
 #
@@ -61,14 +71,14 @@
 # of the data, when new rows are added, they will not be updated, since they
 # have a bigger row number, use END whenever you can
 #
-# 11: URL
+# 13: URL
 # Specify the URL of the table / site to be scraped.
 #
 # The URL can contain a wildcard * to specify that you would like to scrape all
 # of the tables on a particular website.
 #
 #
-# 12: RELATIVE
+# 14: RELATIVE
 #
 # Only required if the URL uses a wildcard
 #
@@ -79,13 +89,13 @@
 # then relative should be 'R' , otherwise it should be 'A'. This option is only
 # important if you are using wildcard expansion.
 #
-# 13: FILE-TYPE
+# 15: FILE-TYPE
 # Only required if the URL contains a wildcard
 #
 # Specify what kind of files you want to extract. Currently the
 # only 2 supported options are 'csv' and 'xlsx'.
 #
-# 14: CUT
+# 16: CUT
 # Only required if the URL contains a wildcard
 #
 # Some websites use relative addressing but not to your base address. 
@@ -653,7 +663,7 @@
 
 # testing some of the update functionality on some tables from the bank of canada
 # daily interest rates
-"R",22/07/2021,"daily","REPLACE","interest:rates:bank:Canada","no","csv",1,"interest rates from bank of canada",,1,2:END,"https://www150.statcan.gc.ca/t1/tbl1/en/dtl!downloadDbLoadingData-nonTraduit.action?pid=1010013901&latestN=0&startDate=19990101&endDate=20300713&csvLocale=en&selectedMembers=%5B%5B1%5D%2C%5B12%2C13%2C14%2C15%2C16%2C17%2C18%2C19%2C20%2C21%2C22%2C23%2C24%2C25%2C26%2C27%2C28%2C29%2C30%2C31%2C32%2C33%2C34%2C36%2C37%2C38%2C39%5D%5D"
+#"R",26/07/2021,"daily","REPLACE","interest:rates:bank:Canada","no","csv",1,"interest rates from bank of canada",,1,2:END,"https://www150.statcan.gc.ca/t1/tbl1/en/dtl!downloadDbLoadingData-nonTraduit.action?pid=1010013901&latestN=0&startDate=19990101&endDate=20300713&csvLocale=en&selectedMembers=%5B%5B1%5D%2C%5B12%2C13%2C14%2C15%2C16%2C17%2C18%2C19%2C20%2C21%2C22%2C23%2C24%2C25%2C26%2C27%2C28%2C29%2C30%2C31%2C32%2C33%2C34%2C36%2C37%2C38%2C39%5D%5D"
 
 
 # the only unique thing that stats canada requires is to change the URL to maximize the amount of data collected
@@ -670,3 +680,4 @@
 # testing zip
 #"R",21/07/2021,"daily","ADD","interest","yes:10100139.csv","csv",1,"interest rates v2",,1,2:END,"https://www150.statcan.gc.ca/n1/tbl/csv/10100139-eng.zip"
 
+#"R",,"daily","ADD","gas:extraction","no","csv",,"natural gas extraction",,
