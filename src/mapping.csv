@@ -663,7 +663,7 @@
 
 # testing some of the update functionality on some tables from the bank of canada
 # daily interest rates
-#"R",26/07/2021,"daily","REPLACE","interest:rates:bank:Canada","no","csv",1,"interest rates from bank of canada",,1,2:END,"https://www150.statcan.gc.ca/t1/tbl1/en/dtl!downloadDbLoadingData-nonTraduit.action?pid=1010013901&latestN=0&startDate=19990101&endDate=20300713&csvLocale=en&selectedMembers=%5B%5B1%5D%2C%5B12%2C13%2C14%2C15%2C16%2C17%2C18%2C19%2C20%2C21%2C22%2C23%2C24%2C25%2C26%2C27%2C28%2C29%2C30%2C31%2C32%2C33%2C34%2C36%2C37%2C38%2C39%5D%5D"
+"R",26/07/2021,"daily","REPLACE","interest:rates:bank:Canada","no","csv",1,"interest rates from bank of canada",,1,2:END,"https://www150.statcan.gc.ca/t1/tbl1/en/dtl!downloadDbLoadingData-nonTraduit.action?pid=1010013901&latestN=0&startDate=19990101&endDate=20300713&csvLocale=en&selectedMembers=%5B%5B1%5D%2C%5B12%2C13%2C14%2C15%2C16%2C17%2C18%2C19%2C20%2C21%2C22%2C23%2C24%2C25%2C26%2C27%2C28%2C29%2C30%2C31%2C32%2C33%2C34%2C36%2C37%2C38%2C39%5D%5D"
 
 
 # the only unique thing that stats canada requires is to change the URL to maximize the amount of data collected
@@ -678,6 +678,4 @@
 
 
 # testing zip
-#"R",21/07/2021,"daily","ADD","interest","yes:10100139.csv","csv",1,"interest rates v2",,1,2:END,"https://www150.statcan.gc.ca/n1/tbl/csv/10100139-eng.zip"
-
-#"R",,"daily","ADD","gas:extraction","no","csv",,"natural gas extraction",,
+"R",26/07/2021,"daily","ADD","interest","yes:10100139.csv","csv",1,"interest rates v2",,1,2:END,"https://www150.statcan.gc.ca/n1/tbl/csv/10100139-eng.zip"
