@@ -97,7 +97,7 @@ represents a location within a file identified by a tag and offset
 i.e finding a row by matching a string in the first column, and then you
 can seek relative to that location
 
-ex) "NAME"-1 would find the row where the first cell contains only NAME and 
+ex) "NAME"+-1 would find the row where the first cell contains only NAME and 
 go up one row
 '''
 class TagAndOffset(Location):
@@ -158,17 +158,21 @@ def get_urls_list(base_url, row):
                 raise Exception
        
         except:
-                print("only xlsx and csv files are supported for the FILE-TYPE"
-                        " field, please send me an email!")
+                print("only xlsx and csv files are supported for the FILE-TYPE")
                 exit(1)
         
 
 
 
-        # scrape the website and get all of the urls
+        # replace the asterix with nothing
         base_url = base_url.replace("/*", "")
+
+        # create our website parser
         website = Website("", base_url, relative)
         crawler = Crawler(website, search, 'Return')
+
+        # tell the crawler we want to scrape all sites in the base url
+        # appended with '' (empty)
         crawler.get('')
         url_list = crawler.get_urls()
         
@@ -343,9 +347,8 @@ def process_entry(row_passed, curs, entry_type):
     
         
         # get the orientation of the file
-        row_type = row_passed[ROW_ORIENTED]
-
         # column oriented, need to transpose each of the sheets
+        row_type = row_passed[ROW_ORIENTED]
         if row_type == "C":
             for index, lst in enumerate(data):
                 data[index] = columm_to_row(lst)
@@ -441,7 +444,8 @@ def parse_xlsx(url, curs, bytes_data=None):
         res = requests.get(url)
         res_byte = BytesIO(res.content).read()
 
-    
+    # we passed the bytes in because the file was zipped
+    # use these instead
     else:
         
         res_byte = bytes_data
