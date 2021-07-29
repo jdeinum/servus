@@ -1,12 +1,5 @@
 ''' 
 this file contains most if not all of the program logic
-
-
-python is not my primary language, and i am not too familiar with its 
-tooling, i've left formal documentation in hope that my inline documentation 
-is sufficient
-
-
 '''
 ##############################################################################
 # IMPORTS
@@ -97,7 +90,8 @@ i.e finding a row by matching a string in the first column, and then you
 can seek relative to that location
 
 ex) "NAME"+-1 would find the row where the first cell contains only NAME and 
-go up one row
+go up one row, the + is needed to seperate, so the user is required to enter
++0 if they want the exact row
 '''
 class TagAndOffset(Location):
     tag = None
@@ -640,7 +634,6 @@ def update_cells_add(table_id, content, curs):
         # find the index of the last matched row in the data
         for i in range(len(content) - 1 , 0, -1):
             if content[i] == con_row:
-                print("The matching row was row number {}".format(i))
                 max_index = i
 
     
@@ -735,9 +728,7 @@ def enter_data(title, description, update_frequency, keywords, labels,
     
 
 '''
-updates the last-date-crawled field, currently this doesn't do anything other
-than let the people looking at the mapping file know when the last time they 
-crawled it
+updates the creation date for an entry when create.py is called
 '''
 def update_parse(filename):
 
@@ -767,7 +758,10 @@ def update_parse(filename):
         # replace the date with todays date for any entry
         else:       
             split[1] = date.today().strftime("%d/%m/%Y")
-        line =  ",".join(split)
+
+        # we prepend a # to comment out the entry, because we dont want
+        # to use that entry each time we call create.py
+        line =  '#' + ",".join(split)
         new_data.append(line)
             
 
@@ -1036,7 +1030,13 @@ def unzip_and_extract(url, filename):
     myzipfile = zipfile.ZipFile(filebytes)
 
     # extract the file
-    extracted_file = myzipfile.open(filename)
+    try:
+        extracted_file = myzipfile.open(filename)
+
+    # throws a key error if the file does not exist
+    except KeyError:
+        print("The given filename does not exist within the zip archive!")
+        exit(1)
 
     # read the data as bytes and return it
     data = extracted_file.read()

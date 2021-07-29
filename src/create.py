@@ -50,7 +50,7 @@ def main():
 
         # create the tables
         curs.execute("CREATE TABLE IF NOT EXISTS tables (rowid INTEGER PRIMARY KEY ON CONFLICT REPLACE,title TEXT, description TEXT, update_frequency TEXT, crawl_frequency TEXT, url TEXT UNIQUE ON CONFLICT REPLACE, row TEXT);")
-        curs.execute("CREATE TABLE IF NOT EXISTS columns (table_id INTEGER, column_id INTEGER, header TEXT ,FOREIGN KEY(table_id) references tables(rowid) ON DELETE CASCADE, PRIMARY KEY (table_id, column_id) ON CONFLICT REPLACE);")
+        curs.execute("CREATE TABLE IF NOT EXISTS columns (table_id INTEGER, column_id INTEGER, header TEXT ,FOREIGN KEY(table_id) references tables(rowid) ON DELETE CASCADE, PRIMARY KEY (table_id, column_id) ON CONFLICT REPLACE, FOREIGN KEY(table_id) REFERENCES tables(rowid) ON DELETE CASCADE);")
         curs.execute("CREATE TABLE IF NOT EXISTS cells (table_id INTEGER, row_id INTEGER, column_id INTEGER, value TEXT, FOREIGN KEY(table_id) REFERENCES tables(rowid) ON DELETE CASCADE);")
         curs.execute("CREATE TABLE IF NOT EXISTS keywords (table_id INTEGER, keyword TEXT, FOREIGN KEY(table_id) REFERENCES tables(rowid) ON DELETE CASCADE, PRIMARY KEY (table_id,keyword) ON CONFLICT REPLACE);")
 

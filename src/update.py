@@ -12,7 +12,7 @@ the database for that entry
 '''
 
 from datetime import date
-from system import update
+from system import update, update_parse
 
 DB_FILE = "../MASTER.sqlite"
 
@@ -36,5 +36,7 @@ def main():
         update("yearly")
 
     update("daily")
+
+    update_parse("mapping.csv")
 
 main()
