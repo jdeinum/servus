@@ -675,8 +675,22 @@
 #"R",16/07/2021,"weekly","ADD","fishing:index",1,"Fisher commodity price index - United States dollar terms - Bank of Canada - Fisher commodity price index - United States dollar terms - Bank of Canada - weekly",,1,2:END,"https://www150.statcan.gc.ca/t1/tbl1/en/dtl!downloadDbLoadingData-nonTraduit.action?pid=1010014301&latestN=5&startDate=19900101&endDate=20300101&csvLocale=en&selectedMembers=%5B%5B1%5D%2C%5B1%2C2%2C3%2C4%2C5%2C6%2C7%5D%5D"
 
 
-# NOTE I added ZIP support here, none of the above entries will work anymore
+# NOTE I added ZIP support here, none of the above entries will work anymore without some minor tweeking
 
 
-# testing zip
-#"R",28/07/2021,"daily","ADD","interest","yes:10100139.csv","csv",1,"interest rates v2",,1,2:END,"https://www150.statcan.gc.ca/n1/tbl/csv/10100139-eng.zip"
+# second zip
+#"R",28/07/2021,"daily","ADD","interest","yes:10100139.csv","csv",1,"interest rates v2",,1,2:END,"https://www150.statcan.gc.ca/n1/tbl/csv/10100139-eng.zip
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+# TARGET TABLE
+#"R",29/07/2021,"weekly","ADD","natural:gas:production","no","csv",,"natural gas production","AB 2007- Present",1,2:END,"https://economicdashboard.alberta.ca/Download/DownloadFile?extension=csv&requestUrl=https%3A%2F%2Feconomicdashboard.alberta.ca%2Fapi%2FNaturalGasProduction"
+
+

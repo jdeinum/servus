@@ -197,7 +197,14 @@ def get_data(start, end, data, number=0):
     # returning None will signal the program to insert Null
     if start < 0 or end < 0:
         return None
-    return data[number][start:end]
+    try:
+        return data[number][start:end]
+
+    except IndexError:
+        print("The sheet number was incorrect! Please change it and run the"
+        " program again")
+        exit(1)
+
 
 
 '''
